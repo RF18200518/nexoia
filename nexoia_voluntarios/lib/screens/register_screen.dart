@@ -73,7 +73,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             rol: _rol,
             intereses: _intereses.toList(),
           );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        // Volver a la raíz para que Root reconstruya y muestre el shell correcto
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
