@@ -63,6 +63,7 @@ gestión de voluntariado de la Universidad Central de Nicaragua (UCN).
   con reportlab); KPIs de impacto por organización en `GET /organizaciones/{id}/indicadores`;
   **equipos** (`GET/POST /equipos`, `POST /equipos/armar` auto-multidisciplinario,
   `DELETE /equipos/{id}`); **reportes** (`GET /reportes/resumen` JSON + `GET /reportes/horas.csv`).
+- **Feed unificado (Fase 4+)**: `GET /postulaciones/feed` une invitaciones reales (`sugerido`/`aceptado`) + propuestas simuladas; elimina duplicados; ordena invitaciones primero y luego por match. El estudiante ve todo en un solo feed "Propuestas para ti".
 - Migraciones Alembic aplicadas. Seed con datos demo.
 
 **App (Flutter)** — compartida móvil/web
