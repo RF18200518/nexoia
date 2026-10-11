@@ -396,6 +396,7 @@ flutter run -d <device>   # con la IP LAN puesta en api_config.dart
   multidisciplinario por necesidad + listar/eliminar); **Reportes** (resumen JSON +
   **CSV export**); KPIs de impacto por organización; "Mis certificados" en perfil
   estudiante. PDF+QR generado con reportlab + qrcode.
+- **Repo GitHub**: https://github.com/RF18200518/nexoia (commit `52d34ae` Fase 4 completa).
 - **Fase 3**: App Organizaciones (vínculo usuario↔org, publicar, candidatos % match, invitar).
 - **Fase 2**: Aceptar/Rechazar + Asistencia por QR (generar/validar, suma de horas).
 - Simulación de propuestas + intereses en registro + feed en vivo.

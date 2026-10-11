@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/session.dart';
+import '../../core/theme.dart';
 import 'mis_necesidades_screen.dart';
 import 'publicar_necesidad_screen.dart';
 
@@ -22,10 +23,17 @@ class _OrganizacionShellState extends State<OrganizacionShell> {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = context.watch<ThemeController>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Panel Organización'),
         actions: [
+          IconButton(
+            tooltip: themeController.isDark ? 'Modo claro' : 'Modo oscuro',
+            icon: Icon(themeController.isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+            onPressed: () => themeController.toggle(),
+          ),
           IconButton(
             tooltip: 'Cerrar sesión',
             icon: const Icon(Icons.logout_rounded),

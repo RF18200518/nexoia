@@ -9,8 +9,20 @@ import 'screens/login_screen.dart';
 import 'screens/organizacion/organizacion_shell.dart';
 import 'screens/splash_screen.dart';
 
-void main() {
-  runApp(const NexoIaApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final themeController = ThemeController();
+  await themeController.load();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => Session()..inicializar()),
+        ChangeNotifierProvider.value(value: themeController),
+      ],
+      child: const NexoIaApp(),
+    ),
+  );
 }
 
 class NexoIaApp extends StatelessWidget {
@@ -18,14 +30,15 @@ class NexoIaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => Session()..inicializar(),
-      child: MaterialApp(
-        title: 'NexoIA',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        home: const Root(),
-      ),
+    return Consumer<ThemeController>(
+      builder: (_, themeController, _) {
+        return MaterialApp(
+          title: 'NexoIA',
+          debugShowCheckedModeBanner: false,
+          theme: themeController.theme,
+          home: const Root(),
+        );
+      },
     );
   }
 }

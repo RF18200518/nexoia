@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../core/theme.dart';
+import '../core/session.dart';
 import 'mis_horas_screen.dart';
 import 'oportunidades_screen.dart';
 import 'perfil_screen.dart';
@@ -22,7 +25,24 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = context.watch<ThemeController>();
+
     return Scaffold(
+      appBar: AppBar(
+        title: Text(['Oportunidades', 'Mis horas', 'Perfil'][_index]),
+        actions: [
+          IconButton(
+            tooltip: themeController.isDark ? 'Modo claro' : 'Modo oscuro',
+            icon: Icon(themeController.isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+            onPressed: () => themeController.toggle(),
+          ),
+          IconButton(
+            tooltip: 'Cerrar sesión',
+            icon: const Icon(Icons.logout_rounded),
+            onPressed: () => context.read<Session>().logout(),
+          ),
+        ],
+      ),
       body: IndexedStack(index: _index, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,

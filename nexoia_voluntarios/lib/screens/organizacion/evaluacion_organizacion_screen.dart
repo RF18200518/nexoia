@@ -43,8 +43,6 @@ class _EvaluacionOrganizacionScreenState extends State<EvaluacionOrganizacionScr
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Evaluación / Mis horas'),
@@ -297,6 +295,7 @@ class _TarjetaNecesidadOrg extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: unused_local_variable
     final scheme = Theme.of(context).colorScheme;
     final fechaFormateada = necesidad.fecha != null
         ? '${necesidad.fecha!.day}/${necesidad.fecha!.month}/${necesidad.fecha!.year}'

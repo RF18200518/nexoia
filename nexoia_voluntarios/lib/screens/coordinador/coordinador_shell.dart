@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/session.dart';
+import '../../core/theme.dart';
 import 'certificados_admin_screen.dart';
 import 'dashboard_screen.dart';
 import 'equipos_admin_screen.dart';
@@ -103,6 +104,8 @@ class _DrawerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final themeController = context.watch<ThemeController>();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
@@ -125,6 +128,28 @@ class _DrawerHeader extends StatelessWidget {
           Text(
             'NexoIA · UCN',
             style: TextStyle(color: scheme.onPrimary.withValues(alpha: 0.8)),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Icon(
+                themeController.isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                color: scheme.onPrimary,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                themeController.isDark ? 'Modo oscuro' : 'Modo claro',
+                style: TextStyle(color: scheme.onPrimary, fontWeight: FontWeight.w600),
+              ),
+              const Spacer(),
+              Switch(
+                value: themeController.isDark,
+                onChanged: (_) => themeController.toggle(),
+                activeThumbColor: scheme.onPrimary,
+                activeTrackColor: scheme.onPrimary.withValues(alpha: 0.3),
+              ),
+            ],
           ),
         ],
       ),
