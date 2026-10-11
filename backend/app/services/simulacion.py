@@ -25,7 +25,7 @@ from app.models import (
 from app.services.catalogo import CATALOGO, POR_CLAVE
 from app.services.match import aplicar
 
-__all__ = ["CATALOGO", "POR_CLAVE", "generar", "estado_feed"]
+__all__ = ["CATALOGO", "POR_CLAVE", "generar", "estado_feed", "get_propuestas_para_estudiante"]
 
 # (titulo, descripcion, habilidades, ubicacion, cupos, duracion)
 PLANTILLAS: dict[str, list[tuple]] = {
@@ -217,3 +217,12 @@ def estado_feed(db: Session, estudiante: Usuario) -> dict:
         "intervalo": intervalo,
         "propuestas": llegadas,
     }
+
+
+def get_propuestas_para_estudiante(db: Session, estudiante_id: int) -> list[Necesidad]:
+    """Obtiene las propuestas simuladas activas (llegadas) para un estudiante."""
+    estudiante = db.get(Usuario, estudiante_id)
+    if not estudiante:
+        return []
+    feed = estado_feed(db, estudiante)
+    return feed["propuestas"]

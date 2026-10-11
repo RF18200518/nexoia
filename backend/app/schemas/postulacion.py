@@ -24,3 +24,15 @@ class PostulacionDetalleOut(PostulacionOut):
     necesidad_naturaleza: str | None = None
     necesidad_ubicacion: str | None = None
     horas: float = 0
+
+
+class FeedUnificadoItem(BaseModel):
+    id: int
+    tipo: str  # "simulada" | "invitacion"
+    necesidad_id: int
+    titulo: str
+    naturaleza: str | None = None
+    ubicacion: str | None = None
+    compatibilidad: int | None = None
+    estado: str | None = None  # para invitaciones: "sugerido", "aceptado", etc.
+    model_config = ConfigDict(from_attributes=True)

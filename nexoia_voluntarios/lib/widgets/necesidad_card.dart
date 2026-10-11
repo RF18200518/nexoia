@@ -10,11 +10,17 @@ class NecesidadCard extends StatelessWidget {
     required this.necesidad,
     required this.onTap,
     this.nueva = false,
+    this.compatibilidad,
+    this.esInvitacion = false,
+    this.estadoInvitacion,
   });
 
   final Necesidad necesidad;
   final VoidCallback onTap;
   final bool nueva;
+  final int? compatibilidad;
+  final bool esInvitacion;
+  final String? estadoInvitacion;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +44,10 @@ class NecesidadCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
+                          if (esInvitacion) ...[
+                            _InvitacionPill(estado: estadoInvitacion),
+                            const SizedBox(width: 8),
+                          ],
                           if (nueva) ...[
                             _NuevaPill(),
                             const SizedBox(width: 8),
@@ -89,8 +99,8 @@ class NecesidadCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                if (necesidad.compatibilidad > 0)
-                  _MatchChip(porcentaje: necesidad.compatibilidad),
+                if (compatibilidad != null && compatibilidad! > 0)
+                  _MatchChip(porcentaje: compatibilidad!),
                 if (necesidad.ubicacion != null)
                   TagChip(label: necesidad.ubicacion!, icon: Icons.place_outlined),
                 TagChip(label: '${necesidad.cupos} cupos', icon: Icons.groups_outlined),
@@ -193,6 +203,66 @@ class _NuevaPill extends StatelessWidget {
           fontWeight: FontWeight.w800,
           letterSpacing: 0.5,
         ),
+      ),
+    );
+  }
+}
+
+class _InvitacionPill extends StatelessWidget {
+  const _InvitacionPill({required this.estado});
+
+  final String? estado;
+
+  Color get _color {
+    switch (estado) {
+      case 'sugerido':
+        return const Color(0xFFE08A00);
+      case 'aceptado':
+        return const Color(0xFF1B9E77);
+      case 'validado':
+        return const Color(0xFF3B82F6);
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+
+  String get _label {
+    switch (estado) {
+      case 'sugerido':
+        return 'INVITACIÓN';
+      case 'aceptado':
+        return 'ACEPTADA';
+      case 'validado':
+        return 'VALIDADA';
+      default:
+        return 'INVITACIÓN';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: _color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _color.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.mail_outline_rounded, size: 12, color: _color),
+          const SizedBox(width: 4),
+          Text(
+            _label,
+            style: TextStyle(
+              color: _color,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
       ),
     );
   }

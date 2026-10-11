@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../core/session.dart';
 import '../core/theme.dart';
+import '../models/feed_unificado.dart';
 import '../models/necesidad.dart';
 import '../services/necesidad_service.dart';
 import '../services/simulacion_service.dart';
@@ -24,13 +25,13 @@ class _OportunidadesScreenState extends State<OportunidadesScreen> {
   final _simService = SimulacionService();
   final _busqueda = TextEditingController();
 
-  late Future<List<Necesidad>> _future;
+  late Future<List<FeedUnificadoItem>> _future;
   String _filtro = 'Todas';
 
   @override
   void initState() {
     super.initState();
-    _future = _service.recomendadas();
+    _future = _simService.feedUnificado();
   }
 
   @override
@@ -41,7 +42,7 @@ class _OportunidadesScreenState extends State<OportunidadesScreen> {
 
   Future<void> _recargar() async {
     setState(() {
-      _future = _service.recomendadas();
+      _future = _simService.feedUnificado();
     });
     await _future;
   }
@@ -51,14 +52,14 @@ class _OportunidadesScreenState extends State<OportunidadesScreen> {
     _recargar();
   }
 
-  List<Necesidad> _aplicarFiltros(List<Necesidad> lista) {
+  List<FeedUnificadoItem> _aplicarFiltros(List<FeedUnificadoItem> lista) {
     final q = _busqueda.text.trim().toLowerCase();
     return lista.where((n) {
       final coincideFiltro =
           _filtro == 'Todas' || (n.naturaleza ?? 'Otras') == _filtro;
       final coincideTexto = q.isEmpty ||
           n.titulo.toLowerCase().contains(q) ||
-          (n.descripcion ?? '').toLowerCase().contains(q);
+          (n.ubicacion ?? '').toLowerCase().contains(q);
       return coincideFiltro && coincideTexto;
     }).toList();
   }
@@ -72,7 +73,7 @@ class _OportunidadesScreenState extends State<OportunidadesScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _recargar,
-          child: FutureBuilder<List<Necesidad>>(
+          child: FutureBuilder<List<FeedUnificadoItem>>(
             future: _future,
             builder: (context, snapshot) {
               final cargando = snapshot.connectionState == ConnectionState.waiting;
@@ -220,7 +221,7 @@ class _OportunidadesScreenState extends State<OportunidadesScreen> {
     );
   }
 
-  Widget _filtros(List<Necesidad> data) {
+  Widget _filtros(List<FeedUnificadoItem> data) {
     final naturezas = <String>{
       'Todas',
       ...data.map((n) => n.naturaleza ?? 'Otras'),
@@ -257,7 +258,7 @@ class _OportunidadesScreenState extends State<OportunidadesScreen> {
     );
   }
 
-  Widget _lista(List<Necesidad> lista) {
+  Widget _lista(List<FeedUnificadoItem> lista) {
     if (lista.isEmpty) {
       return const SliverFillRemaining(
         hasScrollBody: false,
@@ -275,11 +276,28 @@ class _OportunidadesScreenState extends State<OportunidadesScreen> {
         itemCount: lista.length,
         itemBuilder: (context, i) {
           final n = lista[i];
+final necesidad = Necesidad(
+            id: n.id,
+            organizacionId: 0,
+            titulo: n.titulo,
+            descripcion: '',
+            naturaleza: n.naturaleza,
+            prioridad: 'Media',
+            habilidadesRequeridas: [],
+            cupos: 1,
+            ubicacion: n.ubicacion,
+            estado: 'publicada',
+            fecha: null,
+            duracion: null,
+          );
           return NecesidadCard(
-            necesidad: n,
+            necesidad: necesidad,
+            compatibilidad: n.compatibilidad,
+            esInvitacion: n.tipo == 'invitacion',
+            estadoInvitacion: n.estado,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => NecesidadDetailScreen(necesidad: n),
+                builder: (_) => NecesidadDetailScreen(necesidad: necesidad),
               ),
             ),
           );

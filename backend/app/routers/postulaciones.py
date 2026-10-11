@@ -13,6 +13,7 @@ from app.models import (
     Usuario,
 )
 from app.schemas.postulacion import (
+    FeedUnificadoItem,
     PostulacionCreate,
     PostulacionDetalleOut,
     PostulacionOut,
@@ -84,6 +85,63 @@ def mias(
         .all()
     )
     return [_detalle(db, p) for p in postulaciones]
+
+
+@router.get("/feed", response_model=list[FeedUnificadoItem])
+def feed_unificado(
+    db: Session = Depends(get_db),
+    user: Usuario = Depends(require_roles(Rol.estudiante)),
+):
+    """Feed unificado: propuestas simuladas + invitaciones reales (sugerido/aceptado)."""
+    # 1. Invitaciones reales del estudiante (sugerido, aceptado)
+    postulaciones = (
+        db.query(Postulacion)
+        .filter(
+            Postulacion.estudiante_id == user.id,
+            Postulacion.estado.in_([EstadoPostulacion.sugerido, EstadoPostulacion.aceptado]),
+        )
+        .order_by(Postulacion.id.desc())
+        .all()
+    )
+    items: list[FeedUnificadoItem] = []
+    for p in postulaciones:
+        n = db.get(Necesidad, p.necesidad_id)
+        if n and n.estado == "publicada":
+            items.append(
+                FeedUnificadoItem(
+                    id=p.id,
+                    tipo="invitacion",
+                    necesidad_id=n.id,
+                    titulo=n.titulo,
+                    naturaleza=n.naturaleza,
+                    ubicacion=n.ubicacion,
+                    compatibilidad=None,
+                    estado=p.estado.value,
+                )
+            )
+
+    # 2. Propuestas simuladas (solo si no hay invitación para esa necesidad)
+    from app.services.simulacion import get_propuestas_para_estudiante
+    simuladas = get_propuestas_para_estudiante(db, user.id)
+    ids_invitados = {item.necesidad_id for item in items}
+    for s in simuladas:
+        if s.id not in ids_invitados:
+            items.append(
+                FeedUnificadoItem(
+                    id=s.id,
+                    tipo="simulada",
+                    necesidad_id=s.id,
+                    titulo=s.titulo,
+                    naturaleza=s.naturaleza,
+                    ubicacion=s.ubicacion,
+                    compatibilidad=s.compatibilidad,
+                    estado=None,
+                )
+            )
+
+    # Ordenar: invitaciones primero, luego simuladas por compatibilidad
+    items.sort(key=lambda x: (x.tipo == "simulada", -(x.compatibilidad or 0)))
+    return items
 
 
 @router.post("", response_model=PostulacionDetalleOut, status_code=status.HTTP_201_CREATED)

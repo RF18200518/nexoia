@@ -1,4 +1,5 @@
 import '../core/api_client.dart';
+import '../models/feed_unificado.dart';
 import '../models/simulacion.dart';
 
 class SimulacionService {
@@ -14,6 +15,13 @@ class SimulacionService {
   Future<FeedSimulacion> misPropuestas() async {
     final data = await _api.get('/simulacion/mis-propuestas');
     return FeedSimulacion.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<List<FeedUnificadoItem>> feedUnificado() async {
+    final data = await _api.get('/postulaciones/feed') as List;
+    return data
+        .map((e) => FeedUnificadoItem.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<FeedSimulacion> reiniciar() async {
