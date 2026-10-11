@@ -13,6 +13,7 @@ class Necesidad {
     this.compatibilidad = 0,
     this.fecha,
     this.duracion,
+    this.organizacionNombre,
   });
 
   final int id;
@@ -28,6 +29,7 @@ class Necesidad {
   final int compatibilidad;
   final DateTime? fecha;
   final int? duracion; // en horas
+  final String? organizacionNombre;
 
   factory Necesidad.fromJson(Map<String, dynamic> json) => Necesidad(
         id: (json['id'] as num).toInt(),
@@ -44,5 +46,6 @@ class Necesidad {
         compatibilidad: (json['compatibilidad'] as num?)?.toInt() ?? 0,
         fecha: json['fecha'] != null ? DateTime.parse(json['fecha'] as String) : null,
         duracion: json['duracion'] as int?,
+        organizacionNombre: json['organizacion_nombre'] as String?,
       );
 }

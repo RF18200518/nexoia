@@ -188,6 +188,52 @@ def invitar(
     return p
 
 
+@router.get("/{necesidad_id}/inscritos", response_model=list[PostulacionOut])
+def inscritos(
+    necesidad_id: int,
+    db: Session = Depends(get_db),
+    user: Usuario = Depends(require_roles(Rol.coordinador, Rol.organizacion)),
+):
+    """Lista de estudiantes inscritos en una necesidad (aceptado/sugerido/validado)."""
+    n = db.get(Necesidad, necesidad_id)
+    if not n:
+        raise HTTPException(status_code=404, detail="Necesidad no encontrada")
+    if user.rol == Rol.organizacion:
+        org = db.get(Organizacion, n.organizacion_id)
+        if not org or org.usuario_id != user.id:
+            raise HTTPException(status_code=403, detail="No puedes ver inscritos de esta necesidad")
+
+    postulaciones = (
+        db.query(Postulacion)
+        .filter(
+            Postulacion.necesidad_id == necesidad_id,
+            Postulacion.estado.in_([EstadoPostulacion.sugerido, EstadoPostulacion.aceptado, EstadoPostulacion.validado]),
+        )
+        .order_by(Postulacion.id.desc())
+        .all()
+    )
+
+    resultado = []
+    for p in postulaciones:
+        estudiante = db.get(Usuario, p.estudiante_id)
+        necesidad = db.get(Necesidad, p.necesidad_id)
+        resultado.append(
+            PostulacionOut(
+                id=p.id,
+                estudiante_id=p.estudiante_id,
+                necesidad_id=p.necesidad_id,
+                estado=p.estado,
+                estudiante_nombre=estudiante.nombre if estudiante else None,
+                estudiante_correo=estudiante.correo if estudiante else None,
+                necesidad_titulo=necesidad.titulo if necesidad else None,
+                necesidad_naturaleza=necesidad.naturaleza if necesidad else None,
+                necesidad_ubicacion=necesidad.ubicacion if necesidad else None,
+                horas=0,  # Postulacion no tiene horas, se calcula desde asistencias
+            )
+        )
+    return resultado
+
+
 @router.put("/{necesidad_id}", response_model=NecesidadOut)
 def actualizar(
     necesidad_id: int,

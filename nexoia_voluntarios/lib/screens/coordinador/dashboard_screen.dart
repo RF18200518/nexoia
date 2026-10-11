@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../../models/indicador.dart';
 import '../../services/indicador_service.dart';
+import '../../services/reporte_service.dart';
 import '../../services/analytics_service.dart';
 import '../../widgets/badges.dart';
 import '../../widgets/empty_state.dart';
@@ -17,19 +18,25 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _service = IndicadorService();
+  final _reporteService = ReporteService();
   final _analytics = AnalyticsService();
   late Future<Indicadores> _future;
+  late Future<Map<String, dynamic>> _resumenFuture;
   bool _showChart = true;
 
   @override
   void initState() {
     super.initState();
     _future = _service.obtener();
+    _resumenFuture = _reporteService.resumen();
     _analytics.trackScreenView('dashboard_coordinador');
   }
 
   Future<void> _recargar() async {
-    setState(() => _future = _service.obtener());
+    setState(() {
+      _future = _service.obtener();
+      _resumenFuture = _reporteService.resumen();
+    });
     await _future;
     _analytics.trackAction('refresh_dashboard');
   }
@@ -73,7 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
               _horasCarreraCard(data, scheme),
               const SizedBox(height: 20),
-              _topOrgsCard(data, scheme),
+              _topOrgsCard(scheme),
               const SizedBox(height: 12),
               _actionsRow(scheme),
             ],
@@ -301,7 +308,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _topOrgsCard(Indicadores d, ColorScheme scheme) {
+  Widget _topOrgsCard(ColorScheme scheme) {
     return SoftCard(
       padding: const EdgeInsets.all(20),
       radius: 20,
@@ -309,21 +316,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Top organizaciones (por necesidades)',
+            'Top organizaciones',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: scheme.onSurface),
           ),
           const SizedBox(height: 12),
-          // Mock data for now - would come from API
-          _orgRow('Fundación Verde', 5, Icons.eco_rounded, scheme),
-          _orgRow('Comedor Infantil San Juan', 3, Icons.restaurant_rounded, scheme),
-          _orgRow('Reforestación Cerro', 2, Icons.forest_rounded, scheme),
-          _orgRow('Apoyo Escolar', 4, Icons.school_rounded, scheme),
+          FutureBuilder<Map<String, dynamic>>(
+            future: _resumenFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final lista = (snapshot.data?['top_organizaciones'] as List? ?? [])
+                  .cast<Map<String, dynamic>>();
+              if (lista.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text('Sin datos de organizaciones',
+                        style: TextStyle(color: scheme.onSurfaceVariant)),
+                  ),
+                );
+              }
+              return Column(
+                children: lista.asMap().entries.map((e) {
+                  final o = e.value;
+                  return _orgRow(
+                    '${e.key + 1}',
+                    o['nombre'] as String? ?? 'Organización',
+                    (o['necesidades'] as num?)?.toInt() ?? 0,
+                    scheme,
+                  );
+                }).toList(),
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _orgRow(String nombre, int necesidades, IconData icon, ColorScheme scheme) {
+  Widget _orgRow(String rank, String nombre, int necesidades, ColorScheme scheme) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -335,7 +370,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: scheme.secondaryContainer,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Center(child: Icon(icon, color: scheme.onSecondaryContainer, size: 18)),
+            child: Center(
+              child: Text(
+                '#$rank',
+                style: TextStyle(
+                  color: scheme.onSecondaryContainer,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12.5,
+                ),
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(child: Text(nombre, style: const TextStyle(fontWeight: FontWeight.w600))),

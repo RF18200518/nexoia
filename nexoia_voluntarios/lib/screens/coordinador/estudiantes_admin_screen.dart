@@ -20,10 +20,34 @@ class _EstudiantesAdminScreenState extends State<EstudiantesAdminScreen> {
   String? _error;
   int? _emitiendo;
 
+  final _busqueda = TextEditingController();
+  bool _soloSobrecarga = false;
+
   @override
   void initState() {
     super.initState();
     _cargar();
+    _busqueda.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _busqueda.dispose();
+    super.dispose();
+  }
+
+  List<EstudianteResumen> get _filtrados {
+    final q = _busqueda.text.trim().toLowerCase();
+    return _items.where((e) {
+      if (_soloSobrecarga && !e.sobrecarga) return false;
+      if (q.isEmpty) return true;
+      final texto = [
+        e.nombre,
+        e.carrera ?? '',
+        ...e.habilidades,
+      ].join(' ').toLowerCase();
+      return texto.contains(q);
+    }).toList();
   }
 
   Future<void> _cargar() async {
@@ -79,19 +103,81 @@ class _EstudiantesAdminScreenState extends State<EstudiantesAdminScreen> {
       return _Estado(mensaje: _error!, onReintentar: _cargar);
     }
     if (_items.isEmpty) {
-      return const _Estado(mensaje: 'Aún no hay estudiantes registrados.');
+      return _Estado(mensaje: 'Aún no hay estudiantes registrados.', onReintentar: _cargar);
     }
+    final filtrados = _filtrados;
+    final sobrecargados = _items.where((e) => e.sobrecarga).length;
     return RefreshIndicator(
       onRefresh: _cargar,
-      child: ListView.separated(
+      child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        itemCount: _items.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, i) => _TarjetaEstudiante(
-          estudiante: _items[i],
-          emitiendo: _emitiendo == _items[i].id,
-          onEmitir: () => _emitir(_items[i]),
-        ),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${_items.length} estudiantes',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+              ),
+              if (sobrecargados > 0)
+                _Badge(
+                  texto: '$sobrecargados en sobrecarga',
+                  color: Theme.of(context).colorScheme.error,
+                  icono: Icons.warning_amber_rounded,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _busqueda,
+            decoration: InputDecoration(
+              hintText: 'Buscar por nombre, carrera o habilidad',
+              prefixIcon: const Icon(Icons.search_rounded),
+              suffixIcon: _busqueda.text.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => _busqueda.clear(),
+                    ),
+              filled: true,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            children: [
+              FilterChip(
+                label: const Text('Todos'),
+                selected: !_soloSobrecarga,
+                onSelected: (_) => setState(() => _soloSobrecarga = false),
+              ),
+              FilterChip(
+                avatar: const Icon(Icons.warning_amber_rounded, size: 16),
+                label: const Text('Solo sobrecarga'),
+                selected: _soloSobrecarga,
+                onSelected: (_) => setState(() => _soloSobrecarga = true),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (filtrados.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Center(child: Text('Sin resultados para tu búsqueda.')),
+            )
+          else
+            ...filtrados.map(
+              (e) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _TarjetaEstudiante(
+                  estudiante: e,
+                  emitiendo: _emitiendo == e.id,
+                  onEmitir: () => _emitir(e),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

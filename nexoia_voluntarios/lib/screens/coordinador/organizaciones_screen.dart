@@ -33,6 +33,13 @@ class _OrganizacionesScreenState extends State<OrganizacionesScreen> {
     return null;
   }
 
+  static String _iniciales(String nombre) {
+    final partes = nombre.trim().split(RegExp(r'\s+'));
+    if (partes.isEmpty) return '?';
+    if (partes.length == 1) return partes.first[0].toUpperCase();
+    return '${partes.first[0]}${partes.last[0]}'.toUpperCase();
+  }
+
   Future<void> _cambiarEstado(Organizacion o, String nuevo) async {
     try {
       await _service.cambiarEstado(o.id, nuevo);
@@ -124,6 +131,12 @@ class _OrganizacionesScreenState extends State<OrganizacionesScreen> {
                           children: [
                             Row(
                               children: [
+                                CircleAvatar(
+                                  backgroundColor: scheme.primaryContainer,
+                                  foregroundColor: scheme.onPrimaryContainer,
+                                  child: Text(_iniciales(o.nombre)),
+                                ),
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     o.nombre,
@@ -159,6 +172,22 @@ class _OrganizacionesScreenState extends State<OrganizacionesScreen> {
                               const SizedBox(height: 6),
                               Text(o.contacto!,
                                   style: TextStyle(color: scheme.onSurfaceVariant)),
+                            ],
+                            if (o.sitio != null && o.sitio!.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(Icons.link_rounded, size: 16, color: scheme.onSurfaceVariant),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      o.sitio!,
+                                      style: TextStyle(color: scheme.onSurfaceVariant),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                             const SizedBox(height: 14),
                             Wrap(

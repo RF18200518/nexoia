@@ -391,6 +391,14 @@ flutter run -d <device>   # con la IP LAN puesta en api_config.dart
 **Simulación rápida para demos:** en `backend\.env` → `SIM_INTERVALO_SEGUNDOS=15`.
 
 ## 12. Bitácora breve (más reciente primero)
+- **Fase 4 — Pulido UI panel coordinador**: `coordinador_shell` con navegación híbrida
+  (`NavigationBar` en móvil + `Drawer` agrupado GESTIÓN/HERRAMIENTAS), confirmación de
+  logout, acción rápida FAB (nueva necesidad/equipo/certificado/reportes). Dashboard con
+  **Top organizaciones real** desde `/reportes/resumen` (ya no mock). Pestañas Estudiantes,
+  Certificados y Necesidades con **buscador + filtros + contadores**; Reportes y Equipos con
+  confirmación al eliminar; Validar asistencia con **historial de validaciones**. Fix del
+  archivo `publicar_necesidad_screen.dart` (métodos `dispose`/`_seleccionarFechaHora`
+  duplicados) → build web OK.
 - **Fase 4 ✅**: Panel coordinador con Drawer (8 secciones), lista de **Estudiantes** con
   horas/certificados/badge *sobrecarga* ≥ 100 h + botón **Emitir certificado**;
   **Certificados** (lista + descargar PDF con QR); **Equipos** (armar automático

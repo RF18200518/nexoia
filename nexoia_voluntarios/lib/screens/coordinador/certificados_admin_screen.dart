@@ -19,10 +19,28 @@ class _CertificadosAdminScreenState extends State<CertificadosAdminScreen> {
   String? _error;
   int? _descargando;
 
+  final _busqueda = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _cargar();
+    _busqueda.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _busqueda.dispose();
+    super.dispose();
+  }
+
+  List<Certificado> get _filtrados {
+    final q = _busqueda.text.trim().toLowerCase();
+    if (q.isEmpty) return _items;
+    return _items.where((c) {
+      final texto = '${c.estudianteNombre ?? ''} ${c.codigoVerificacion}'.toLowerCase();
+      return texto.contains(q);
+    }).toList();
   }
 
   Future<void> _cargar() async {
@@ -75,19 +93,51 @@ class _CertificadosAdminScreenState extends State<CertificadosAdminScreen> {
       return _Estado(mensaje: _error!, onReintentar: _cargar);
     }
     if (_items.isEmpty) {
-      return const _Estado(mensaje: 'Todavía no se han emitido certificados.');
+      return _Estado(mensaje: 'Todavía no se han emitido certificados.', onReintentar: _cargar);
     }
+    final filtrados = _filtrados;
     return RefreshIndicator(
       onRefresh: _cargar,
-      child: ListView.separated(
+      child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        itemCount: _items.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, i) => _TarjetaCertificado(
-          certificado: _items[i],
-          descargando: _descargando == _items[i].id,
-          onDescargar: () => _descargar(_items[i]),
-        ),
+        children: [
+          Text(
+            '${_items.length} certificados emitidos',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _busqueda,
+            decoration: InputDecoration(
+              hintText: 'Buscar por voluntario o código',
+              prefixIcon: const Icon(Icons.search_rounded),
+              suffixIcon: _busqueda.text.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => _busqueda.clear(),
+                    ),
+              filled: true,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (filtrados.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Center(child: Text('Sin resultados para tu búsqueda.')),
+            )
+          else
+            ...filtrados.map(
+              (c) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _TarjetaCertificado(
+                  certificado: c,
+                  descargando: _descargando == c.id,
+                  onDescargar: () => _descargar(c),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

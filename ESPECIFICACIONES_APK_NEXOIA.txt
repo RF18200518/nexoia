@@ -1,0 +1,250 @@
+================================================================================
+                    NEXOIA - ESPECIFICACIONES COMPLETAS APK
+                          Guia de Build, Config y Deploy
+================================================================================
+
+================================================================================
+1. CONFIGURACION DE ENTORNO (API URL)
+================================================================================
+Archivo: lib/core/api_config.dart
+
+// OPCION A: WiFi Local (PC y celular en misma red) - RECOMENDADO PARA DEMO
+// 1. En PC: abre PowerShell y ejecuta: ipconfig
+// 2. Busca "Direccion IPv4" de tu adaptador WiFi (ej: 192.168.1.45)
+// 3. Cambia la IP abajo:
+static const String baseUrl = 'http://192.168.1.XX:8000';  // <-- TU IP AQUI
+
+// OPCION B: ngrok (Celular en otra red / Internet)
+// 1. ngrok http 8000
+// 2. Copia la URL HTTPS (ej: https://abc123.ngrok-free.app)
+// 3. Cambia:
+static const String baseUrl = 'https://TU_URL.ngrok-free.app';
+
+// CODIGO COMPLETO api_config.dart
+/*
+class ApiConfig {
+  // CAMBIA ESTO SEGUN TU ENTORNO:
+  static const String baseUrl = 'http://192.168.1.XX:8000';  // WiFi local
+  // static const String baseUrl = 'https://abc123.ngrok-free.app';  // ngrok
+
+  static const String wsUrl = baseUrl.replace('http', 'ws');
+  
+  static Uri buildUri(String path) => Uri.parse('$baseUrl$path');
+}
+*/
+
+================================================================================
+2. ANDROID MANIFEST - PERMISOS Y CONFIGURACION HTTP
+================================================================================
+Archivo: android/app/src/main/AndroidManifest.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.nexoia.nexoia_voluntarios">
+
+    <!-- PERMISOS REQUERIDOS -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <application
+        android:label="NexoIA"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:enableOnBackInvokedCallback="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+            
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+</manifest>
+
+================================================================================
+3. NETWORK SECURITY CONFIG (HTTP LOCAL + NGROK)
+================================================================================
+Archivo: android/app/src/main/res/xml/network_security_config.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains>192.168.1.XX</domain>
+    <domain includeSubdomains>ngrok-free.app</domain>
+  </domain-config>
+</network-security-config>
+
+Nota: Cambia 192.168.1.XX por tu IP real (ej: 192.168.1.45)
+
+================================================================================
+4. BUILD APK - COMANDOS
+================================================================================
+# Debug (para testing)
+flutter build apk --debug
+
+# Release (para demo/produccion)
+flutter build apk --release
+# Resultado: build/app/outputs/flutter-apk/app-release.apk
+
+# App Bundle (para Play Store)
+flutter build appbundle --release
+# Resultado: build/app/outputs/bundle/release/app-release.aab
+
+================================================================================
+5. INSTALACION EN CELULAR
+================================================================================
+1. Transfiere el .apk al celular (WhatsApp, cable USB, Google Drive)
+2. Habilita "Instalar apps de origen desconocido" en ajustes
+3. Instala y abre
+4. Conecta PC y celular a MISMA WiFi (o hotspot del celular)
+
+================================================================================
+6. PARA DEMO RAPIDA (HOY)
+================================================================================
+OPCION A - Web en celular (mas rapido):
+  ngrok http 8080
+  # Abre en celular: https://TU_URL.ngrok-free.app
+
+OPCION B - APK + WiFi local:
+  1. flutter build apk --release
+  2. Transfiere APK -> Instala
+  3. PC y celular en misma WiFi
+  4. baseUrl = 'http://192.168.1.TU_IP:8000'
+
+================================================================================
+7. DEPLOY 24/7 (PRODUCCION)
+================================================================================
+| Componente    | Plataforma                    | Costo
+|---------------|-------------------------------|-------
+| Backend       | Railway / Render / Fly.io     | Gratis (con limites)
+| Frontend Web  | Vercel / Netlify / Firebase   | Gratis
+| Base de Datos | PostgreSQL (Railway/Supabase) | Gratis
+
+# Backend deploy
+cd backend
+railway login && railway init && railway add postgresql && railway up
+
+# Frontend deploy  
+cd nexoia_voluntarios
+flutter build web --release
+cd build/web
+vercel --prod
+
+================================================================================
+8. CHECKLIST PRE-DEMO
+================================================================================
+[ ] lib/core/api_config.dart -> IP correcta
+[ ] AndroidManifest.xml -> usesCleartextTraffic="true"
+[ ] network_security_config.xml -> dominios permitidos
+[ ] flutter build apk --release -> APK generado
+[ ] Backend corriendo en 0.0.0.0:8000
+[ ] PC y celular en MISMA red (o ngrok configurado)
+[ ] Credenciales demo funcionando:
+    - Estudiante: rafael.mairena@gmail.com / rafael123
+    - Org: fundacion.verde@gmail.com / fundacion123
+    - Coordinador: coordinador.ucn@gmail.com / coordinador123
+
+================================================================================
+9. CREDENCIALES DEMO
+================================================================================
+| Rol           | Email                        | Password     |
+|---------------|------------------------------|--------------|
+| Estudiante    | rafael.mairena@gmail.com     | rafael123    |
+| Organizacion  | fundacion.verde@gmail.com    | fundacion123 |
+| Coordinador   | coordinador.ucn@gmail.com    | coordinador123|
+
+================================================================================
+10. ESTRUCTURA DEL PROYECTO
+================================================================================
+NexoIA/
+├── backend/                    # FastAPI + SQLite/PostgreSQL
+│   ├── app/
+│   │   ├── models/             # SQLAlchemy models
+│   │   ├── routers/            # API endpoints
+│   │   ├── services/           # Business logic
+│   │   ├── schemas/            # Pydantic schemas
+│   │   └── main.py             # App entry point
+│   ├── alembic/                # Migraciones DB
+│   └── requirements.txt
+│
+├── nexoia_voluntarios/         # Flutter App (Mobile + Web)
+│   ├── lib/
+│   │   ├── core/               # Config, theme, API client
+│   │   ├── models/             # Dart models
+│   │   ├── screens/            # UI screens
+│   │   ├── services/           # API services
+│   │   ├── widgets/            # Reusable widgets
+│   │   └── main.dart
+│   ├── android/                # Android config
+│   ├── ios/                    # iOS config
+│   └── web/                    # Web build output
+│
+├── MEMORY.md                   # Documentacion tecnica
+└── NexoIA-Plan-de-Trabajo.md   # Plan de trabajo
+
+================================================================================
+11. COMANDOS UTILES POWER SHELL
+================================================================================
+# Ver IP local
+ipconfig | findstr "IPv4"
+
+# Matar procesos python
+Get-Process -Name python | Stop-Process -Force
+
+# Levantar backend
+cd C:\Users\user\NexoIA\backend
+.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Levantar web
+cd C:\Users\user\NexoIA\nexoia_voluntarios
+.venv\Scripts\python.exe -m http.server 8080 --bind 0.0.0.0 --directory build\web
+
+# ngrok (requiere authtoken)
+ngrok http 8000
+ngrok http 8080
+
+# Build APK
+flutter build apk --release
+
+# Ver logs Android
+flutter logs
+
+================================================================================
+12. URLs IMPORTANTES
+================================================================================
+- Repo GitHub: https://github.com/RF18200518/nexoia
+- Backend local: http://127.0.0.1:8000
+- Swagger Docs: http://127.0.0.1:8000/docs
+- Web Local: http://127.0.0.1:8080
+- ngrok Dashboard: http://127.0.0.1:4040
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================

@@ -69,6 +69,26 @@ class _EquiposAdminScreenState extends State<EquiposAdminScreen> {
     }
   }
 
+  Future<void> _confirmarEliminar(Equipo e) async {
+    final titulo = e.necesidadTitulo ?? 'Equipo #${e.id}';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar equipo'),
+        content: Text('¿Eliminar el equipo de "$titulo"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) await _eliminar(e.id);
+  }
+
   Future<void> _eliminar(int equipoId) async {
     setState(() => _eliminando = equipoId);
     try {
@@ -122,14 +142,20 @@ class _EquiposAdminScreenState extends State<EquiposAdminScreen> {
           ],
           if (_equiposList.isEmpty)
             const _Estado(mensaje: 'No hay equipos creados.')
-          else
+          else ...[
+            Text(
+              '${_equiposList.length} equipo(s)',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 12),
             ..._equiposList.map(
               (e) => _TarjetaEquipo(
                 equipo: e,
                 eliminando: _eliminando == e.id,
-                onEliminar: () => _eliminar(e.id),
+                onEliminar: () => _confirmarEliminar(e),
               ),
             ),
+          ],
         ],
       ),
     );

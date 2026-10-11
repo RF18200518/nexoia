@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/necesidad.dart';
 import '../../services/necesidad_service.dart';
@@ -6,6 +7,7 @@ import '../../services/organizacion_service.dart';
 import '../../widgets/badges.dart';
 import '../../widgets/empty_state.dart';
 import 'candidatos_screen.dart';
+import 'publicar_necesidad_screen.dart';
 
 class MisNecesidadesScreen extends StatefulWidget {
   const MisNecesidadesScreen({super.key});
@@ -39,6 +41,40 @@ class _MisNecesidadesScreenState extends State<MisNecesidadesScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => CandidatosScreen(necesidad: n)),
     );
+  }
+
+  Future<void> _editarNecesidad(Necesidad n) async {
+    final resultado = await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => PublicarNecesidadScreen(necesidadEditar: n)),
+    );
+    if (resultado == true) _recargar();
+  }
+
+  Future<void> _eliminarNecesidad(Necesidad n) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar necesidad'),
+        content: Text('¿Eliminar "${n.titulo}"? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      // TODO: Implementar endpoint DELETE en backend
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Función en desarrollo')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo eliminar. Intenta de nuevo.')),
+      );
+    }
   }
 
   @override
@@ -78,6 +114,8 @@ class _MisNecesidadesScreenState extends State<MisNecesidadesScreen> {
             itemBuilder: (context, i) => _TarjetaNecesidad(
               necesidad: lista[i],
               onVerCandidatos: () => _verCandidatos(lista[i]),
+              onEditar: () => _editarNecesidad(lista[i]),
+              onEliminar: () => _eliminarNecesidad(lista[i]),
             ),
           );
         },
@@ -90,14 +128,24 @@ class _TarjetaNecesidad extends StatelessWidget {
   const _TarjetaNecesidad({
     required this.necesidad,
     required this.onVerCandidatos,
+    required this.onEditar,
+    required this.onEliminar,
   });
 
   final Necesidad necesidad;
   final VoidCallback onVerCandidatos;
+  final VoidCallback onEditar;
+  final VoidCallback onEliminar;
 
   @override
   Widget build(BuildContext context) {
     final n = necesidad;
+    final scheme = Theme.of(context).colorScheme;
+    final fechaStr = n.fecha != null
+        ? DateFormat('d MMM yyyy HH:mm', 'es').format(n.fecha!)
+        : 'Sin fecha definida';
+    final cuposDisponibles = n.cupos; // TODO: calcular disponibles desde backend
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
@@ -141,17 +189,37 @@ class _TarjetaNecesidad extends StatelessWidget {
                   TagChip(label: n.naturaleza!, icon: Icons.category_outlined),
                 if (n.ubicacion != null)
                   TagChip(label: n.ubicacion!, icon: Icons.place_outlined),
-                TagChip(label: '${n.cupos} cupos', icon: Icons.groups_outlined),
+                TagChip(label: '$cuposDisponibles cupos', icon: Icons.groups_outlined),
+                TagChip(label: n.fecha != null ? DateFormat('d MMM HH:mm', 'es').format(n.fecha!) : 'Sin fecha', icon: Icons.calendar_today_outlined),
+                TagChip(label: '${n.cupos} cupos totales', icon: Icons.groups_outlined),
               ],
             ),
             const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.tonalIcon(
-                onPressed: onVerCandidatos,
-                icon: const Icon(Icons.people_alt_outlined),
-                label: const Text('Ver candidatos'),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    onPressed: onVerCandidatos,
+                    icon: const Icon(Icons.people_alt_outlined),
+                    label: const Text('Ver candidatos'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onEditar,
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Editar'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: onEliminar,
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  color: Colors.red,
+                  tooltip: 'Eliminar',
+                ),
+              ],
             ),
           ],
         ),

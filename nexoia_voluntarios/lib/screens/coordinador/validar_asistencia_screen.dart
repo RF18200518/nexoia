@@ -16,6 +16,7 @@ class _ValidarAsistenciaScreenState extends State<ValidarAsistenciaScreen> {
 
   bool _enviando = false;
   ValidarResultado? _resultado;
+  final List<ValidarResultado> _historial = [];
 
   @override
   void dispose() {
@@ -35,7 +36,10 @@ class _ValidarAsistenciaScreenState extends State<ValidarAsistenciaScreen> {
       final r = await _service.validar(codigo);
       if (!mounted) return;
       setState(() => _resultado = r);
-      if (r.ok) _controller.clear();
+      if (r.ok) {
+        _controller.clear();
+        _historial.insert(0, r);
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _resultado = ValidarResultado(
@@ -111,6 +115,21 @@ class _ValidarAsistenciaScreenState extends State<ValidarAsistenciaScreen> {
         if (_resultado != null) ...[
           const SizedBox(height: 18),
           _TarjetaResultado(resultado: _resultado!),
+        ],
+        if (_historial.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              const Icon(Icons.history_rounded, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Validaciones recientes (${_historial.length})',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ..._historial.take(10).map((r) => _FilaHistorial(resultado: r)),
         ],
       ],
     );
@@ -189,6 +208,54 @@ class _TarjetaResultado extends StatelessWidget {
             ),
           ),
           Expanded(child: Text(valor)),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilaHistorial extends StatelessWidget {
+  const _FilaHistorial({required this.resultado});
+
+  final ValidarResultado resultado;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle_rounded, color: const Color(0xFF1B9E77), size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  resultado.estudiante ?? 'Voluntario',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                if (resultado.necesidad != null)
+                  Text(
+                    resultado.necesidad!,
+                    style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+          if (resultado.horas != null)
+            Text(
+              '+${resultado.horas!.toStringAsFixed(0)} h',
+              style: TextStyle(color: const Color(0xFF1B9E77), fontWeight: FontWeight.w700),
+            ),
         ],
       ),
     );

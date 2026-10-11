@@ -19,13 +19,6 @@ def register(data: RegisterIn, db: Session = Depends(get_db)):
     if existe:
         raise HTTPException(status_code=400, detail="Ese correo ya está registrado")
 
-    for (hash_guardado,) in db.query(Usuario.contrasena_hash).all():
-        if verify_password(data.contrasena, hash_guardado):
-            raise HTTPException(
-                status_code=400,
-                detail="Esa contraseña ya está en uso. Elige una diferente.",
-            )
-
     user = Usuario(
         nombre=data.nombre,
         correo=data.correo,

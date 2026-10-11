@@ -64,4 +64,15 @@ class NecesidadService {
         .map((e) => Postulacion.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  Future<List<Postulacion>> obtenerInscritos(int necesidadId) async {
+    final data = await _api.get('/necesidades/$necesidadId/inscritos') as List;
+    return data
+        .map((e) => Postulacion.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> actualizar(int necesidadId, Map<String, dynamic> body) async {
+    await _api.put('/necesidades/$necesidadId', body: body);
+  }
 }

@@ -93,9 +93,18 @@ class _NecesidadesCoordScreenState extends State<NecesidadesCoordScreen> {
 
                 return ListView.builder(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                  itemCount: lista.length,
+                  itemCount: lista.length + 1,
                   itemBuilder: (context, i) {
-                    final n = lista[i];
+                    if (i == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          '${lista.length} necesidad(es)',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                        ),
+                      );
+                    }
+                    final n = lista[i - 1];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Container(
