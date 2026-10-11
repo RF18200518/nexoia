@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.env
+.venv/
+venv/
+backend/.venv/
+backend/nexoia.db
+backend/alembic/versions/*.pyc
+
+# Flutter
+.dart_tool/
+build/
+*.dart_tool/
+.packages
+flutter_*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local config
+*.local
+local.properties
